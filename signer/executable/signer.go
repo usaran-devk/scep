@@ -1,0 +1,121 @@
+package executablesigner
+
+import (
+	"bytes"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
+	"fmt"
+	"os"
+	"os/exec"
+
+	"github.com/go-kit/log"
+	"github.com/smallstep/scep"
+)
+
+const (
+	userExecute os.FileMode = 1 << (6 - 3*iota)
+	groupExecute
+	otherExecute
+	cmdSign   = "sign"
+	cmdCACert = "cacert"
+)
+
+// New creates a executablesigner.ExecutableSigner.
+func New(path string, logger log.Logger) (*ExecutableSigner, error) {
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+
+	fileMode := fileInfo.Mode()
+	if fileMode.IsDir() {
+		return nil, errors.New("CSR Verifier executable is a directory")
+	}
+
+	filePerm := fileMode.Perm()
+	if filePerm&(userExecute|groupExecute|otherExecute) == 0 {
+		return nil, errors.New("CSR Verifier executable is not executable")
+	}
+
+	return &ExecutableSigner{executable: path, logger: logger}, nil
+}
+
+type ExecutableSigner struct {
+	executable string
+	logger     log.Logger
+}
+
+// SignCSR signs a certificate using an external command
+// The first argument is "sign"
+// The CSR is passed as PEM data on stdin
+// The challenge password is passed as environment variable SCEP_CHALLENGE_PASSWORD
+// The signed certificate is expected on stdout as PEM data
+func (s *ExecutableSigner) SignCSR(m *scep.CSRReqMessage) (*x509.Certificate, error) {
+	var out bytes.Buffer
+
+	cmd := exec.Command(s.executable, cmdSign)
+	cmd.Env = append(os.Environ(), "SCEP_CHALLENGE_PASSWORD="+m.ChallengePassword)
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+	cmd.Stdout = &out
+
+	csrDerBytes := m.CSR.Raw
+	csrPemData := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrDerBytes})
+	go func() {
+		defer stdin.Close()
+
+		stdin.Write(csrPemData)
+	}()
+
+	err = cmd.Run()
+	if err != nil {
+		s.logger.Log("err", err)
+		return nil, err
+	}
+
+	certPemData := out.String()
+	// fmt.Println("Captured PEM Data:\n", pemData)
+
+	// Decode the PEM
+	block, _ := pem.Decode([]byte(certPemData))
+	if block == nil || block.Type != "CERTIFICATE" {
+		err := fmt.Errorf("Failed to decode PEM block containing the certificate")
+		s.logger.Log("err", err)
+		return nil, err
+	}
+
+	return x509.ParseCertificate(block.Bytes)
+}
+
+// CACert returns the CA certificate
+// The first argument is "cacert"
+// The ca certificate is expected on stdout as PEM data
+func (s *ExecutableSigner) CACert() (*x509.Certificate, error) {
+	var out bytes.Buffer
+
+	cmd := exec.Command(s.executable, cmdCACert)
+	cmd.Stdout = &out
+
+	err := cmd.Run()
+	if err != nil {
+		s.logger.Log("err", err)
+		return nil, err
+	}
+
+	certPemData := out.String()
+	// fmt.Println("Captured PEM Data:\n", pemData)
+
+	// Decode the PEM
+	block, _ := pem.Decode([]byte(certPemData))
+	if block == nil || block.Type != "CERTIFICATE" {
+		err := fmt.Errorf("Failed to decode PEM block containing the certificate")
+		s.logger.Log("err", err)
+		return nil, err
+	}
+
+	return x509.ParseCertificate(block.Bytes)
+}

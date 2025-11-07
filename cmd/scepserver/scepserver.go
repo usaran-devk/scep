@@ -19,6 +19,7 @@ import (
 	scepdepot "github.com/usaran-devk/scep/v2/depot"
 	"github.com/usaran-devk/scep/v2/depot/file"
 	scepserver "github.com/usaran-devk/scep/v2/server"
+	executablesigner "github.com/usaran-devk/scep/v2/signer/executable"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -54,6 +55,7 @@ func main() {
 		flDebug             = flag.Bool("debug", envBool("SCEP_LOG_DEBUG"), "enable debug logging")
 		flLogJSON           = flag.Bool("log-json", envBool("SCEP_LOG_JSON"), "output JSON logs")
 		flSignServerAttrs   = flag.Bool("sign-server-attrs", envBool("SCEP_SIGN_SERVER_ATTRS"), "sign cert attrs for server usage")
+		flSignerExec        = flag.String("signerexec", envString("SCEP_SIGNER_EXEC", ""), "will be passed the CSRs for signing")
 	)
 	flag.Usage = func() {
 		flag.PrintDefaults()
@@ -147,7 +149,18 @@ func main() {
 		if *flSignServerAttrs {
 			signerOpts = append(signerOpts, scepdepot.WithSeverAttrs())
 		}
-		var signer scepserver.CSRSignerContext = scepserver.SignCSRAdapter(scepdepot.NewSigner(depot, signerOpts...))
+
+		var signer scepserver.CSRSignerContext
+		if *flSignerExec > "" {
+			executableSigner, err := executablesigner.New(*flSignerExec, lginfo)
+			if err != nil {
+				lginfo.Log("err", err, "msg", "Could not instantiate executable signer")
+				os.Exit(1)
+			}
+			signer = scepserver.SignCSRAdapter(executableSigner)
+		} else {
+			signer = scepserver.SignCSRAdapter(scepdepot.NewSigner(depot, signerOpts...))
+		}
 		if *flChallengePassword != "" {
 			signer = scepserver.StaticChallengeMiddleware(*flChallengePassword, signer)
 		}
