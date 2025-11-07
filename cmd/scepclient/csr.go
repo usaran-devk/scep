@@ -9,7 +9,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/micromdm/scep/v2/cryptoutil/x509util"
+	"github.com/usaran-devk/scep/v2/cryptoutil/x509util"
 )
 
 const (

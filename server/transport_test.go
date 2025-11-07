@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/micromdm/scep/v2/depot"
-	filedepot "github.com/micromdm/scep/v2/depot/file"
-	scepserver "github.com/micromdm/scep/v2/server"
+	"github.com/usaran-devk/scep/v2/depot"
+	filedepot "github.com/usaran-devk/scep/v2/depot/file"
+	scepserver "github.com/usaran-devk/scep/v2/server"
 
 	kitlog "github.com/go-kit/log"
 )

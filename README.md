@@ -1,7 +1,7 @@
 # scep
 
-[![CI](https://github.com/micromdm/scep/workflows/CI/badge.svg)](https://github.com/micromdm/scep/actions)
-[![Go Reference](https://pkg.go.dev/badge/github.com/micromdm/scep/v2.svg)](https://pkg.go.dev/github.com/micromdm/scep/v2)
+[![CI](https://github.com/usaran-devk/scep/workflows/CI/badge.svg)](https://github.com/usaran-devk/scep/actions)
+[![Go Reference](https://pkg.go.dev/badge/github.com/usaran-devk/scep/v2.svg)](https://pkg.go.dev/github.com/usaran-devk/scep/v2)
 
 `scep` is a Simple Certificate Enrollment Protocol server and client
 
@@ -10,7 +10,7 @@
 
 ## Installation
 
-Binary releases are available on the [releases page](https://github.com/micromdm/scep/releases).
+Binary releases are available on the [releases page](https://github.com/usaran-devk/scep/releases).
 
 ### Compiling from source
 
