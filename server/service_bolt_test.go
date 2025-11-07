@@ -8,7 +8,6 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"testing"
@@ -150,7 +149,7 @@ func TestCaCert(t *testing.T) {
 
 func createDB(mode os.FileMode, options *bolt.Options) *boltdepot.Depot {
 	// Create temporary path.
-	f, _ := ioutil.TempFile("", "bolt-")
+	f, _ := os.CreateTemp("", "bolt-")
 	f.Close()
 	os.Remove(f.Name())
 
@@ -167,7 +166,7 @@ func createDB(mode os.FileMode, options *bolt.Options) *boltdepot.Depot {
 
 func createChallengeStore(mode os.FileMode, options *bolt.Options) *challengestore.Depot {
 	// Create temporary path.
-	f, _ := ioutil.TempFile("", "bolt-challenge-")
+	f, _ := os.CreateTemp("", "bolt-challenge-")
 	f.Close()
 	os.Remove(f.Name())
 

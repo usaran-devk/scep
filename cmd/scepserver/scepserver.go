@@ -20,8 +20,8 @@ import (
 	"github.com/micromdm/scep/v2/depot/file"
 	scepserver "github.com/micromdm/scep/v2/server"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 // version info

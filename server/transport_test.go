@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/base64"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,7 +15,7 @@ import (
 	filedepot "github.com/micromdm/scep/v2/depot/file"
 	scepserver "github.com/micromdm/scep/v2/server"
 
-	kitlog "github.com/go-kit/kit/log"
+	kitlog "github.com/go-kit/log"
 )
 
 func TestCACaps(t *testing.T) {
@@ -165,7 +164,7 @@ const (
 )
 
 func loadTestFile(t *testing.T, path string) []byte {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)
 	}

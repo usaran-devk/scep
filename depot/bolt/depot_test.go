@@ -1,7 +1,6 @@
 package bolt
 
 import (
-	"io/ioutil"
 	"math/big"
 	"os"
 	"reflect"
@@ -13,7 +12,7 @@ import (
 // createDepot creates a Bolt database in a temporary location.
 func createDB(mode os.FileMode, options *bolt.Options) *Depot {
 	// Create temporary path.
-	f, _ := ioutil.TempFile("", "bolt-")
+	f, _ := os.CreateTemp("", "bolt-")
 	f.Close()
 	os.Remove(f.Name())
 

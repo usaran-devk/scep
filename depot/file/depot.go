@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -359,7 +358,7 @@ func (d *fileDepot) getFile(path string) (*file, error) {
 	if err != nil {
 		return nil, err
 	}
-	b, err := ioutil.ReadFile(d.path(path))
+	b, err := os.ReadFile(d.path(path))
 	return &file{fi, b}, err
 }
 

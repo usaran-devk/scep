@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	stdlog "log"
 	"net/url"
 	"os"
@@ -18,8 +17,8 @@ import (
 
 	scepclient "github.com/micromdm/scep/v2/client"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/pkg/errors"
 	"github.com/smallstep/scep"
 )
@@ -204,7 +203,7 @@ func run(cfg runCfg) error {
 	}
 
 	respCert := respMsg.CertRepMessage.Certificate
-	if err := ioutil.WriteFile(cfg.certPath, pemCert(respCert.Raw), 0666); err != nil {
+	if err := os.WriteFile(cfg.certPath, pemCert(respCert.Raw), 0666); err != nil {
 		return err
 	}
 
