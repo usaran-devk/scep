@@ -1,6 +1,7 @@
 VERSION=$(shell git describe --tags --always --dirty)
 LDFLAGS=-ldflags "-X main.version=$(VERSION)"
 OSARCH=$(shell go env GOHOSTOS)-$(shell go env GOHOSTARCH)
+CGO_ENABLED ?= 0
 
 SCEPCLIENT=\
 	scepclient-linux-amd64 \
@@ -25,10 +26,10 @@ win: scepclient-windows-amd64.exe scepserver-windows-amd64.exe
 docker: scepclient-linux-amd64 scepserver-linux-amd64
 
 $(SCEPCLIENT):
-	GOOS=$(word 2,$(subst -, ,$@)) GOARCH=$(word 3,$(subst -, ,$(subst .exe,,$@))) go build $(LDFLAGS) -o $@ ./cmd/scepclient
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(word 2,$(subst -, ,$@)) GOARCH=$(word 3,$(subst -, ,$(subst .exe,,$@))) go build $(LDFLAGS) -o $@ ./cmd/scepclient
 
 $(SCEPSERVER):
-	GOOS=$(word 2,$(subst -, ,$@)) GOARCH=$(word 3,$(subst -, ,$(subst .exe,,$@))) go build $(LDFLAGS) -o $@ ./cmd/scepserver
+	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(word 2,$(subst -, ,$@)) GOARCH=$(word 3,$(subst -, ,$(subst .exe,,$@))) go build $(LDFLAGS) -o $@ ./cmd/scepserver
 
 %-$(VERSION).zip: %.exe
 	rm -f $@
