@@ -61,13 +61,28 @@ func (svc *service) GetCACert(ctx context.Context, _ string) ([]byte, int, error
 	if svc.crt == nil {
 		return nil, 0, errors.New("missing CA certificate")
 	}
-	if len(svc.addlCa) < 1 {
-		return svc.crt.Raw, 1, nil
+
+	certs := []*x509.Certificate{}
+
+	// Add signer certificates at first when existing
+	cacerts, err := svc.signer.CACertContext(ctx)
+	if err != nil {
+		return nil, 0, err
 	}
-	certs := []*x509.Certificate{svc.crt}
-	certs = append(certs, svc.addlCa...)
+	if cacerts != nil {
+		certs = append(certs, cacerts...)
+	}
+
+	certs = append(certs, svc.crt)
+
+	if len(svc.addlCa) > 0 {
+		certs = append(certs, svc.addlCa...)
+	}
+	if len(certs) == 1 {
+		return certs[0].Raw, 1, nil
+	}
 	data, err := scep.DegenerateCertificates(certs)
-	return data, len(svc.addlCa) + 1, err
+	return data, len(certs), err
 }
 
 func (svc *service) PKIOperation(ctx context.Context, data []byte) ([]byte, error) {

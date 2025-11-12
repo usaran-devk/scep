@@ -144,6 +144,12 @@ func (s *Signer) SignCSR(m *scep.CSRReqMessage) (*x509.Certificate, error) {
 	return crt, nil
 }
 
+// CACert returns the CA certificate chain
+func (s *Signer) CACert() ([]*x509.Certificate, error) {
+	// don't return any certificates here, because the depot certificates are always returned by default
+	return nil, nil
+}
+
 func certName(crt *x509.Certificate) string {
 	if crt.Subject.CommonName != "" {
 		return crt.Subject.CommonName

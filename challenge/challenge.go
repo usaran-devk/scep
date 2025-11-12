@@ -26,15 +26,21 @@ type Store interface {
 
 // Middleware wraps next in a CSRSigner that verifies and invalidates the challenge.
 func Middleware(store Validator, next scepserver.CSRSignerContext) scepserver.CSRSignerContextFunc {
-	return func(ctx context.Context, m *scep.CSRReqMessage) (*x509.Certificate, error) {
-		// TODO: compare challenge only for PKCSReq?
-		valid, err := store.HasChallenge(m.ChallengePassword)
-		if err != nil {
-			return nil, err
-		}
-		if !valid {
-			return nil, errors.New("invalid challenge")
-		}
-		return next.SignCSRContext(ctx, m)
+	return scepserver.CSRSignerContextFunc{
+		Sign: func(ctx context.Context, m *scep.CSRReqMessage) (*x509.Certificate, error) {
+			// TODO: compare challenge only for PKCSReq?
+			valid, err := store.HasChallenge(m.ChallengePassword)
+			if err != nil {
+				return nil, err
+			}
+			if !valid {
+				return nil, errors.New("invalid challenge")
+			}
+			return next.SignCSRContext(ctx, m)
+		},
+		CAcert: func(ctx context.Context) ([]*x509.Certificate, error) {
+			return next.CACertContext(ctx)
+		},
 	}
+
 }

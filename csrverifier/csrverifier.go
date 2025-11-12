@@ -17,14 +17,19 @@ type CSRVerifier interface {
 
 // Middleware wraps next in a CSRSigner that runs verifier
 func Middleware(verifier CSRVerifier, next scepserver.CSRSignerContext) scepserver.CSRSignerContextFunc {
-	return func(ctx context.Context, m *scep.CSRReqMessage) (*x509.Certificate, error) {
-		ok, err := verifier.Verify(m.RawDecrypted)
-		if err != nil {
-			return nil, err
-		}
-		if !ok {
-			return nil, errors.New("CSR verify failed")
-		}
-		return next.SignCSRContext(ctx, m)
+	return scepserver.CSRSignerContextFunc{
+		Sign: func(ctx context.Context, m *scep.CSRReqMessage) (*x509.Certificate, error) {
+			ok, err := verifier.Verify(m.RawDecrypted)
+			if err != nil {
+				return nil, err
+			}
+			if !ok {
+				return nil, errors.New("CSR verify failed")
+			}
+			return next.SignCSRContext(ctx, m)
+		},
+		CAcert: func(ctx context.Context) ([]*x509.Certificate, error) {
+			return next.CACertContext(ctx)
+		},
 	}
 }

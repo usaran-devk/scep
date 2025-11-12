@@ -91,10 +91,10 @@ func (s *ExecutableSigner) SignCSR(m *scep.CSRReqMessage) (*x509.Certificate, er
 	return x509.ParseCertificate(block.Bytes)
 }
 
-// CACert returns the CA certificate
+// CACert returns the CA certificate chain
 // The first argument is "cacert"
-// The ca certificate is expected on stdout as PEM data
-func (s *ExecutableSigner) CACert() (*x509.Certificate, error) {
+// The ca certificate chain is expected on stdout as PEM data
+func (s *ExecutableSigner) CACert() ([]*x509.Certificate, error) {
 	var out bytes.Buffer
 
 	cmd := exec.Command(s.executable, cmdCACert)
@@ -106,16 +106,30 @@ func (s *ExecutableSigner) CACert() (*x509.Certificate, error) {
 		return nil, err
 	}
 
-	certPemData := out.String()
+	certPemData := out.Bytes()
 	// fmt.Println("Captured PEM Data:\n", pemData)
 
 	// Decode the PEM
-	block, _ := pem.Decode([]byte(certPemData))
-	if block == nil || block.Type != "CERTIFICATE" {
-		err := fmt.Errorf("Failed to decode PEM block containing the certificate")
-		s.logger.Log("err", err)
-		return nil, err
+	var cacerts []*x509.Certificate
+
+	for {
+		block, rest := pem.Decode(certPemData)
+		if block == nil {
+			break // No more PEM blocks to decode
+		}
+
+		if block.Type == "CERTIFICATE" {
+			cert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				err := fmt.Errorf("Failed to decode PEM block containing the certificate: %v", err)
+				s.logger.Log("err", err)
+				return nil, err
+			}
+			cacerts = append(cacerts, cert)
+		}
+
+		certPemData = rest
 	}
 
-	return x509.ParseCertificate(block.Bytes)
+	return cacerts, nil
 }
