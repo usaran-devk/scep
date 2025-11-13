@@ -17,12 +17,13 @@ const (
 	userExecute os.FileMode = 1 << (6 - 3*iota)
 	groupExecute
 	otherExecute
-	cmdSign   = "sign"
-	cmdCACert = "cacert"
+	cmdSign             = "sign"
+	cmdCACert           = "cacert"
+	defaultValidityDays = 30
 )
 
 // New creates a executablesigner.ExecutableSigner.
-func New(path string, logger log.Logger) (*ExecutableSigner, error) {
+func New(path string, logger log.Logger, opts ...Option) (*ExecutableSigner, error) {
 	fileInfo, err := os.Stat(path)
 	if err != nil {
 		return nil, err
@@ -38,13 +39,27 @@ func New(path string, logger log.Logger) (*ExecutableSigner, error) {
 		return nil, errors.New("CSR Verifier executable is not executable")
 	}
 
-	return &ExecutableSigner{executable: path, logger: logger}, nil
+	s := &ExecutableSigner{
+		executable:   path,
+		logger:       logger,
+		validityDays: defaultValidityDays,
+	}
+	for _, opt := range opts {
+		if err := opt(s); err != nil {
+			return nil, err
+		}
+	}
+	return s, nil
 }
 
 type ExecutableSigner struct {
-	executable string
-	logger     log.Logger
+	executable   string
+	validityDays int
+	logger       log.Logger
 }
+
+// Option customizes ExecutableSigner
+type Option func(*ExecutableSigner) error
 
 // SignCSR signs a certificate using an external command
 // The first argument is "sign"
@@ -55,7 +70,10 @@ func (s *ExecutableSigner) SignCSR(m *scep.CSRReqMessage) (*x509.Certificate, er
 	var out bytes.Buffer
 
 	cmd := exec.Command(s.executable, cmdSign)
-	cmd.Env = append(os.Environ(), "SCEP_CHALLENGE_PASSWORD="+m.ChallengePassword)
+	cmd.Env = append(os.Environ(),
+		"SCEP_CHALLENGE_PASSWORD="+m.ChallengePassword,
+		fmt.Sprintf("CERT_VALIDITY_DAYS=%d", s.validityDays),
+	)
 
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -132,4 +150,16 @@ func (s *ExecutableSigner) CACert() ([]*x509.Certificate, error) {
 	}
 
 	return cacerts, nil
+}
+
+// WithValidityDays sets the validity period new certs will use
+func WithValidityDays(v int) Option {
+	return func(s *ExecutableSigner) error {
+		if v <= 0 {
+			return fmt.Errorf("validity days must be >= 1")
+		}
+		s.validityDays = v
+
+		return nil
+	}
 }

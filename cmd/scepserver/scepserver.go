@@ -152,7 +152,9 @@ func main() {
 
 		var signer scepserver.CSRSignerContext
 		if *flSignerExec > "" {
-			executableSigner, err := executablesigner.New(*flSignerExec, lginfo)
+			executableSigner, err := executablesigner.New(*flSignerExec, lginfo,
+				executablesigner.WithValidityDays(clientValidity),
+			)
 			if err != nil {
 				lginfo.Log("err", err, "msg", "Could not instantiate executable signer")
 				os.Exit(1)
