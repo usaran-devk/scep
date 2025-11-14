@@ -10,6 +10,8 @@ import (
 	"github.com/smallstep/scep"
 )
 
+var defaultCaps = []byte("SHA-1\nSHA-256\nAES\nDES3\nSCEPStandard\nPOSTPKIOperation")
+
 // Service is the interface for all supported SCEP server operations.
 type Service interface {
 	// GetCACaps returns a list of options
@@ -53,8 +55,12 @@ type service struct {
 }
 
 func (svc *service) GetCACaps(ctx context.Context) ([]byte, error) {
-	defaultCaps := []byte("Renewal\nSHA-1\nSHA-256\nAES\nDES3\nSCEPStandard\nPOSTPKIOperation")
-	return defaultCaps, nil
+	caCaps, err := svc.signer.CACapsContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	caps := caCaps.SCEPCACaps()
+	return append(caps, defaultCaps...), nil
 }
 
 func (svc *service) GetCACert(ctx context.Context, _ string) ([]byte, int, error) {

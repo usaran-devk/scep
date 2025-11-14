@@ -31,5 +31,8 @@ func Middleware(verifier CSRVerifier, next scepserver.CSRSignerContext) scepserv
 		CAcert: func(ctx context.Context) ([]*x509.Certificate, error) {
 			return next.CACertContext(ctx)
 		},
+		CAcaps: func(ctx context.Context) (*scepserver.CSRSignerCACaps, error) {
+			return next.CACapsContext(ctx)
+		},
 	}
 }

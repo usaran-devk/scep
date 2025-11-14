@@ -8,9 +8,12 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strconv"
+	"strings"
 
 	"github.com/go-kit/log"
 	"github.com/smallstep/scep"
+	scepserver "github.com/usaran-devk/scep/v2/server"
 )
 
 const (
@@ -19,6 +22,7 @@ const (
 	otherExecute
 	cmdSign             = "sign"
 	cmdCACert           = "cacert"
+	cmdCACaps           = "cacaps"
 	defaultValidityDays = 30
 )
 
@@ -150,6 +154,27 @@ func (s *ExecutableSigner) CACert() ([]*x509.Certificate, error) {
 	}
 
 	return cacerts, nil
+}
+
+// CACaps returns the CA capabilities
+func (s *ExecutableSigner) CACaps() (*scepserver.CSRSignerCACaps, error) {
+	var out bytes.Buffer
+
+	cmd := exec.Command(s.executable, cmdCACaps)
+	cmd.Stdout = &out
+
+	err := cmd.Run()
+	if err != nil {
+		s.logger.Log("err", err)
+		return nil, err
+	}
+
+	c, err := strconv.Atoi(strings.Split(out.String(), "\n")[0])
+	if err != nil {
+		s.logger.Log("err", err)
+		return nil, err
+	}
+	return scepserver.NewCSRSignerCACaps(scepserver.CSRSignerCACaps(c))
 }
 
 // WithValidityDays sets the validity period new certs will use
