@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/usaran-devk/scep/v2/csrsigner"
 	"github.com/usaran-devk/scep/v2/depot"
 	filedepot "github.com/usaran-devk/scep/v2/depot/file"
 	scepserver "github.com/usaran-devk/scep/v2/server"
@@ -134,7 +135,7 @@ func newServer(t *testing.T, opts ...scepserver.ServiceOption) (*httptest.Server
 	crt, key, err := depot.CA([]byte{})
 	var svc scepserver.Service // scep service
 	{
-		svc, err = scepserver.NewService(crt[0], key, scepserver.NopCSRSigner())
+		svc, err = scepserver.NewService(crt[0], key, csrsigner.NopCSRSigner())
 		if err != nil {
 			t.Fatal(err)
 		}

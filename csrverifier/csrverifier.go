@@ -7,7 +7,7 @@ import (
 	"errors"
 
 	"github.com/smallstep/scep"
-	scepserver "github.com/usaran-devk/scep/v2/server"
+	"github.com/usaran-devk/scep/v2/csrsigner"
 )
 
 // CSRVerifier verifies the raw decrypted CSR.
@@ -16,8 +16,8 @@ type CSRVerifier interface {
 }
 
 // Middleware wraps next in a CSRSigner that runs verifier
-func Middleware(verifier CSRVerifier, next scepserver.CSRSignerContext) scepserver.CSRSignerContextFunc {
-	return scepserver.CSRSignerContextFunc{
+func Middleware(verifier CSRVerifier, next csrsigner.CSRSignerContext) csrsigner.CSRSignerContextFunc {
+	return csrsigner.CSRSignerContextFunc{
 		Sign: func(ctx context.Context, m *scep.CSRReqMessage) (*x509.Certificate, error) {
 			ok, err := verifier.Verify(m.RawDecrypted)
 			if err != nil {
@@ -31,7 +31,7 @@ func Middleware(verifier CSRVerifier, next scepserver.CSRSignerContext) scepserv
 		CAcert: func(ctx context.Context) ([]*x509.Certificate, error) {
 			return next.CACertContext(ctx)
 		},
-		CAcaps: func(ctx context.Context) (*scepserver.CSRSignerCACaps, error) {
+		CAcaps: func(ctx context.Context) (*csrsigner.CSRSignerCACaps, error) {
 			return next.CACapsContext(ctx)
 		},
 	}

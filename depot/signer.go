@@ -7,7 +7,7 @@ import (
 
 	"github.com/smallstep/scep"
 	"github.com/usaran-devk/scep/v2/cryptoutil"
-	scepserver "github.com/usaran-devk/scep/v2/server"
+	"github.com/usaran-devk/scep/v2/csrsigner"
 )
 
 // Signer signs x509 certificates and stores them in a Depot
@@ -152,8 +152,8 @@ func (s *Signer) CACert() ([]*x509.Certificate, error) {
 }
 
 // CACaps returns the CA capabilities
-func (s *Signer) CACaps() (*scepserver.CSRSignerCACaps, error) {
-	return scepserver.NewCSRSignerCACaps(scepserver.CSRSignerCACapsRenew)
+func (s *Signer) CACaps() (*csrsigner.CSRSignerCACaps, error) {
+	return csrsigner.NewCSRSignerCACaps(csrsigner.WithAllowCertRenewal())
 }
 
 func certName(crt *x509.Certificate) string {

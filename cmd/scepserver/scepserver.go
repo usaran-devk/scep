@@ -14,12 +14,14 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/usaran-devk/scep/v2/csrsigner"
+	executablecsrsigner "github.com/usaran-devk/scep/v2/csrsigner/executable"
+
 	"github.com/usaran-devk/scep/v2/csrverifier"
 	executablecsrverifier "github.com/usaran-devk/scep/v2/csrverifier/executable"
 	scepdepot "github.com/usaran-devk/scep/v2/depot"
 	"github.com/usaran-devk/scep/v2/depot/file"
 	scepserver "github.com/usaran-devk/scep/v2/server"
-	executablesigner "github.com/usaran-devk/scep/v2/signer/executable"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -150,21 +152,21 @@ func main() {
 			signerOpts = append(signerOpts, scepdepot.WithSeverAttrs())
 		}
 
-		var signer scepserver.CSRSignerContext
+		var signer csrsigner.CSRSignerContext
 		if *flSignerExec > "" {
-			executableSigner, err := executablesigner.New(*flSignerExec, lginfo,
-				executablesigner.WithValidityDays(clientValidity),
+			executableSigner, err := executablecsrsigner.New(*flSignerExec, lginfo,
+				executablecsrsigner.WithValidityDays(clientValidity),
 			)
 			if err != nil {
 				lginfo.Log("err", err, "msg", "Could not instantiate executable signer")
 				os.Exit(1)
 			}
-			signer = scepserver.SignCSRAdapter(executableSigner)
+			signer = csrsigner.SignCSRAdapter(executableSigner)
 		} else {
-			signer = scepserver.SignCSRAdapter(scepdepot.NewSigner(depot, signerOpts...))
+			signer = csrsigner.SignCSRAdapter(scepdepot.NewSigner(depot, signerOpts...))
 		}
 		if *flChallengePassword != "" {
-			signer = scepserver.StaticChallengeMiddleware(*flChallengePassword, signer)
+			signer = csrsigner.StaticChallengeMiddleware(*flChallengePassword, signer)
 		}
 		if csrVerifier != nil {
 			signer = csrverifier.Middleware(csrVerifier, signer)

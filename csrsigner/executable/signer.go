@@ -1,4 +1,4 @@
-package executablesigner
+package executablecsrsigner
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/smallstep/scep"
-	scepserver "github.com/usaran-devk/scep/v2/server"
+	"github.com/usaran-devk/scep/v2/csrsigner"
 )
 
 const (
@@ -157,7 +157,7 @@ func (s *ExecutableSigner) CACert() ([]*x509.Certificate, error) {
 }
 
 // CACaps returns the CA capabilities
-func (s *ExecutableSigner) CACaps() (*scepserver.CSRSignerCACaps, error) {
+func (s *ExecutableSigner) CACaps() (*csrsigner.CSRSignerCACaps, error) {
 	var out bytes.Buffer
 
 	cmd := exec.Command(s.executable, cmdCACaps)
@@ -174,7 +174,7 @@ func (s *ExecutableSigner) CACaps() (*scepserver.CSRSignerCACaps, error) {
 		s.logger.Log("err", err)
 		return nil, err
 	}
-	return scepserver.NewCSRSignerCACaps(scepserver.CSRSignerCACaps(c))
+	return csrsigner.NewCSRSignerCACaps(csrsigner.WithRawValue(c))
 }
 
 // WithValidityDays sets the validity period new certs will use

@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	challengestore "github.com/usaran-devk/scep/v2/challenge/bolt"
-	scepserver "github.com/usaran-devk/scep/v2/server"
+	"github.com/usaran-devk/scep/v2/csrsigner"
 
 	"github.com/boltdb/bolt"
 	"github.com/smallstep/scep"
@@ -64,7 +64,7 @@ func TestDynamicChallenge(t *testing.T) {
 	}
 
 	// test CSRSigner middleware
-	signer := Middleware(depot, scepserver.NopCSRSigner())
+	signer := Middleware(depot, csrsigner.NopCSRSigner())
 
 	csrReq := &scep.CSRReqMessage{
 		ChallengePassword: challengePassword,

@@ -1,4 +1,4 @@
-package scepserver
+package csrsigner
 
 import (
 	"context"
@@ -13,9 +13,16 @@ import (
 // Currently, only the Renew capability is implemented
 type CSRSignerCACaps int
 
+// CSRSignerCACapsOption customizes CSRSignerCACaps
+type CSRSignerCACapsOption func(*CSRSignerCACaps) error
+
 const (
 	// CSRSignerCACapsRenew specifies if a Cert Renew operation is supported by the Signer CA
 	CSRSignerCACapsRenew CSRSignerCACaps = 1 << iota
+
+	// CSRSignerCACapsAll specifies a combination of all existing capabilities
+	// This must be specified at last
+	CSRSignerCACapsAll CSRSignerCACaps = 1<<iota - 1
 )
 
 // CSRSignerContext is a handler for signing CSRs by a CA/RA.
@@ -68,15 +75,44 @@ type CSRSignerFunc struct {
 }
 
 // NewCSRSignerCACaps creates a CSRSignerCACaps object and initializes it with the provided value
-func NewCSRSignerCACaps(caps CSRSignerCACaps) (*CSRSignerCACaps, error) {
-	// TODO: Find better way to check the valid range for caps value
-	if caps < 0 {
-		return nil, errors.New("csr signer ca caps value must not be negative")
+func NewCSRSignerCACaps(opts ...CSRSignerCACapsOption) (*CSRSignerCACaps, error) {
+	caps := CSRSignerCACaps(0)
+
+	for _, opt := range opts {
+		if err := opt(&caps); err != nil {
+			return nil, err
+		}
 	}
-	if caps > 1 {
-		return nil, errors.New("invalid csr signer ca caps value")
-	}
+
 	return &caps, nil
+}
+
+// WithRawValue sets CSRSignerCACaps to the provided raw value
+func WithRawValue(caps int) CSRSignerCACapsOption {
+	return func(c *CSRSignerCACaps) error {
+		if caps < 0 {
+			return errors.New("csr signer ca caps value must not be negative")
+		}
+		if caps > int(CSRSignerCACapsAll) {
+			return errors.New("invalid csr signer ca caps value")
+		}
+
+		*c = CSRSignerCACaps(caps)
+		return nil
+	}
+}
+
+// WithAllowCertRenewal sets the CSRSignerCACapsRenew flag
+func WithAllowCertRenewal() CSRSignerCACapsOption {
+	return func(c *CSRSignerCACaps) error {
+		*c |= CSRSignerCACapsRenew
+		return nil
+	}
+}
+
+// HasCaps checks if specific capabilities are set
+func (c *CSRSignerCACaps) HasCaps(caps CSRSignerCACaps) bool {
+	return *c&caps == caps
 }
 
 // SCEPCACaps returns the signer CA capabilities in the SCEP format
@@ -115,7 +151,7 @@ func NopCSRSigner() CSRSignerContextFunc {
 			return nil, nil
 		},
 		CAcaps: func(_ context.Context) (*CSRSignerCACaps, error) {
-			return NewCSRSignerCACaps(0)
+			return NewCSRSignerCACaps()
 		},
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"errors"
 
-	scepserver "github.com/usaran-devk/scep/v2/server"
+	"github.com/usaran-devk/scep/v2/csrsigner"
 
 	"github.com/smallstep/scep"
 )
@@ -25,8 +25,8 @@ type Store interface {
 }
 
 // Middleware wraps next in a CSRSigner that verifies and invalidates the challenge.
-func Middleware(store Validator, next scepserver.CSRSignerContext) scepserver.CSRSignerContextFunc {
-	return scepserver.CSRSignerContextFunc{
+func Middleware(store Validator, next csrsigner.CSRSignerContext) csrsigner.CSRSignerContextFunc {
+	return csrsigner.CSRSignerContextFunc{
 		Sign: func(ctx context.Context, m *scep.CSRReqMessage) (*x509.Certificate, error) {
 			// TODO: compare challenge only for PKCSReq?
 			valid, err := store.HasChallenge(m.ChallengePassword)

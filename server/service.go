@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/smallstep/scep"
+	"github.com/usaran-devk/scep/v2/csrsigner"
 )
 
 var defaultCaps = []byte("SHA-1\nSHA-256\nAES\nDES3\nSCEPStandard\nPOSTPKIOperation")
@@ -48,7 +49,7 @@ type service struct {
 	// The (chainable) CSR signing function. Intended to handle all
 	// SCEP request functionality such as CSR & challenge checking, CA
 	// issuance, RA proxying, etc.
-	signer CSRSignerContext
+	signer csrsigner.CSRSignerContext
 
 	/// info logging is implemented in the service middleware layer.
 	debugLogger log.Logger
@@ -139,7 +140,7 @@ func WithAddlCA(ca *x509.Certificate) ServiceOption {
 }
 
 // NewService creates a new scep service
-func NewService(crt *x509.Certificate, key *rsa.PrivateKey, signer CSRSignerContext, opts ...ServiceOption) (Service, error) {
+func NewService(crt *x509.Certificate, key *rsa.PrivateKey, signer csrsigner.CSRSignerContext, opts ...ServiceOption) (Service, error) {
 	s := &service{
 		crt:         crt,
 		key:         key,
